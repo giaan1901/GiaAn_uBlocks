@@ -1,0 +1,16 @@
+module S16_5line
+author 'Gia An'
+version 1 1 
+description 'MKE S16 sensor'
+variables isBlack2 
+
+  spec 'r' 'S16_5Line' 'S16_5Line _' 'auto' 1
+
+to S16_5Line pin {
+  waitMillis 5
+  local 'data' ('[data:newByteArray]' 5)
+  '[sensors:i2cRead]' (hexToInt '0x2A') data
+  local 'result' (at pin data)
+  return result
+}
+
