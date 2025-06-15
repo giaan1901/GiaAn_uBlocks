@@ -1,0 +1,69 @@
+module S16_5line
+author Gia An
+version 1 1 
+description 'S16 MakerLab sensor library'
+
+  spec 'r' '_DEC' '_DEC _ Base _ Length _ Reversed _' 'num auto num bool' 255 2 4 false
+  spec 'r' 'get value from port' 'get value from port _' 'auto' 1
+  spec 'r' 'getValue from port' 'get raw value from port _' 'auto' 1
+  spec 'r' 'getValue' 'getValue'
+
+to '_DEC' decNo base padLength reversed {
+  local '_answer' ('[data:makeList]')
+  local '_output' ''
+  repeatUntil (decNo < base) {
+    '[data:addLast]' (decNo - ((decNo / base) * base)) _answer
+    decNo = (decNo / base)
+  }
+  '[data:addLast]' decNo _answer
+  repeatUntil ((size _answer) == 0) {
+    if ((at 'last' _answer) == 0) {
+      _output = ('[data:join]' _output '0')
+    } else {
+      _output = ('[data:join]' _output (at (at 'last' _answer) '123456789ABCDEFGHIJKLMNOPQRSTUV'))
+    }
+    '[data:delete]' 'last' _answer
+  }
+  if (and (padLength > 0) ((size _output) < padLength)) {
+    _output = ('[data:join]' ('[data:copyFromTo]' '0000000000000000' 1 (padLength - (size _output))) _output)
+  }
+  if reversed {
+    _answer = ('[data:split]' _output '')
+    _output = ('[data:makeList]')
+    repeat (size _answer) {
+      '[data:addLast]' (at 'last' _answer) _output
+      '[data:delete]' 'last' _answer
+    }
+    _output = ('[data:join]' '' ('[data:joinStrings]' _output))
+  }
+  return _output
+}
+
+to 'get value from port' pin {
+  waitMillis 5
+  local 'data' ('[data:newByteArray]' 5)
+  '[sensors:i2cRead]' (hexToInt '0x2A') data
+  local 'result' (at pin data)
+  LineState = 1
+  if (203 > result) {
+    LineState = 0
+  }
+  return LineState
+}
+
+to getValue {
+  local 'var' 0
+  for i 5 {
+    var += (('get value from port' i) << (i - 1))
+  }
+  return ('_DEC' var 2 5 false)
+}
+
+to 'getValue from port' pin {
+  waitMillis 5
+  local 'data' ('[data:newByteArray]' 5)
+  '[sensors:i2cRead]' (hexToInt '0x2A') data
+  local 'result' (at pin data)
+  return result
+}
+
