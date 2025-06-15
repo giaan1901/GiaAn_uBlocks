@@ -1,0 +1,12 @@
+module main
+author unknown
+version 1 0 
+description ''
+
+script 40 40 {
+whenStarted
+forever {
+  sayIt (analogReadOp 18)
+}
+}
+
