@@ -1,0 +1,32 @@
+module 'S01_Ultrasonic' Input
+author 'Gia An'
+version 1 0 
+tags sensor 'S01_Ultrasonic' distance 
+description 'Support for the S01_Ultrasonic distance sensor.'
+variables _sr04_last 
+
+  spec 'r' 'distance (cm)' 'S01 Ultrasonic Distance | Read distance (cm) trigger _ echo _ from port (D3 + D2)' 'num num' 18 19
+
+to 'distance (cm)' trig ech {
+  comment 'Contributed by Joan Guillén and Josep Ferràndiz'
+  digitalWriteOp trig false
+  waitMicros 2
+  digitalWriteOp trig true
+  waitMicros 50
+  digitalWriteOp trig false
+  local 'start' (microsOp)
+  waitUntil (or (not (digitalReadOp ech)) (((microsOp) - start) > 23320))
+  waitUntil (or (digitalReadOp ech) (((microsOp) - start) > 23320))
+  if (((microsOp) - start) > 23320) {
+    comment 'Distance sensor not ready; return the last distance reading'
+    return _sr04_last
+  }
+  comment 'Pulse sent. Measure time until echo is detected.'
+  start = (microsOp)
+  waitUntil (or (not (digitalReadOp ech)) (((microsOp) - start) > 23320))
+  _sr04_last = ((10 * ((microsOp) - start)) / 583)
+  comment 'Leave some time for reverberations to die away.'
+  waitMillis 10
+  return _sr04_last
+}
+
