@@ -1,0 +1,38 @@
+module S15_Temperature
+author GiaAn
+version 1 0 
+choices deg Celcius Fahrenheit 
+description ''
+
+  spec 'r' 'S15_WaterTemp' 'S15 WaterTemp | Read temperature in degree _ from port _' 'menu.deg auto' 'Celcius' 13
+
+to S15_WaterTemp deg port {
+  '[1wire:init]' port
+  local 'addr' ('[data:newByteArray]' 8)
+  local 'data' ('[data:newByteArray]' 9)
+  local 'var' ('[1wire:scanNext]' addr)
+  '[1wire:scanStart]'
+  '[1wire:select]' addr
+  '[1wire:writeByte]' (hexToInt '44') true
+  waitMillis 1000
+  '[1wire:select]' addr
+  '[1wire:writeByte]' (hexToInt 'BE')
+  for i 9 {
+    atPut i data ('[1wire:readByte]')
+  }
+  local 'raw' (((at 2 data) << 8) | (at 1 data))
+  local 'cfg' ((at 5 data) & (hexToInt '60'))
+  if (cfg == (hexToInt '20')) {
+    local 'raw' (raw & ('~' 7))
+  } (cfg == (hexToInt '40')) {
+    local 'raw' (raw & ('~' 3))
+  } else {
+    local 'raw' (raw & ('~' 1))
+  }
+  if (deg == ('[data:toString]' 'Celcius')) {
+    return (raw / 16)
+  } else {
+    return ((((raw / 16) * 18) / 10) + 32)
+  }
+}
+
